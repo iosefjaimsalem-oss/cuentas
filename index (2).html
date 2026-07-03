@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>La Libreta</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=JetBrains+Mono:wght@400;500;700&display=swap');
+
+:root{
+  --bg: #1c1c1c;
+  --paper: #FBF8EF;
+  --ink: #1a1a1a;
+  --grey: #8a8a83;
+  --green: #1f6e43;
+  --red: #b6402f;
+  --dotted: #b9b4a3;
+}
+
+*{ box-sizing:border-box; }
+html,body{ height:100%; }
+body{
+  margin:0;
+  background: radial-gradient(circle at 50% 0%, #2b2b2b 0%, #171717 70%);
+  background-attachment: fixed;
+  color: var(--ink);
+  font-family: 'JetBrains Mono', monospace;
+  min-height:100vh;
+  padding: 30px 14px 70px;
+}
+
+.wrap{ max-width: 420px; margin: 0 auto; }
+
+.masthead{ text-align:center; color: var(--paper); margin-bottom: 18px; }
+.masthead .name{ font-family:'Space Mono', monospace; font-weight:700; font-size: 22px; letter-spacing: 3px; }
+.masthead .name span{ color:#d8a13b; }
+.masthead .tag{ font-size: 10px; letter-spacing: 2px; text-transform:uppercase; color:#8f8f8f; margin-top:4px; }
+
+nav.tabs{ display:flex; gap:6px; margin-bottom: 16px; flex-wrap:wrap; justify-content:center; }
+nav.tabs button{
+  background:#262626; color:#9c9c94; border:1px solid #3a3a3a;
+  font-family:'JetBrains Mono', monospace; font-size:11px; letter-spacing:1px;
+  text-transform:uppercase; padding:7px 10px; cursor:pointer; border-radius:2px;
+}
+nav.tabs button.active{ background:#d8a13b; color:#1c1c1c; border-color:#d8a13b; font-weight:700; }
+
+.receipt{
+  position:relative; background: var(--paper); padding: 22px 20px 20px; margin: 0 0 26px;
+  box-shadow: 0 18px 34px rgba(0,0,0,0.45);
+}
+.receipt::before, .receipt::after{
+  content:''; position:absolute; left:0; right:0; height:10px;
+  background-image:
+    linear-gradient(135deg, transparent 50%, var(--paper) 50%),
+    linear-gradient(-135deg, transparent 50%, var(--paper) 50%);
+  background-size: 14px 14px; background-repeat: repeat-x;
+}
+.receipt::before{ top:-9px; background-position: left top; }
+.receipt::after{ bottom:-9px; transform: scaleY(-1); background-position: left top; }
+
+.r-title{ text-align:center; font-family:'Space Mono', monospace; font-weight:700; font-size:13px; letter-spacing:2px; text-transform:uppercase; margin-bottom:2px; }
+.r-sub{ text-align:center; font-size:10px; color:var(--grey); letter-spacing:1px; text-transform:uppercase; margin-bottom:10px; }
+.dashed{ border:none; border-top:1px dashed var(--dotted); margin: 12px 0; }
+
+.line{ display:flex; align-items:baseline; gap:6px; font-size:13px; padding:3px 0; }
+.line .lbl{ white-space:nowrap; color:var(--ink); }
+.line .lbl.muted{ color:var(--grey); }
+.line .fill{ flex:1; border-bottom:1px dotted var(--dotted); margin-bottom:3px; min-width:8px; }
+.line .val{ white-space:nowrap; font-weight:700; }
+.line .val.pos{ color:var(--green); }
+.line .val.neg{ color:var(--red); }
+
+.total-row{
+  display:flex; justify-content:space-between; align-items:baseline;
+  border-top: 3px double var(--ink); margin-top:10px; padding-top:8px;
+  font-family:'Space Mono', monospace;
+}
+.total-row .t-lbl{ font-size:13px; letter-spacing:1px; text-transform:uppercase; }
+.total-row .t-val{ font-size:20px; font-weight:700; }
+.total-row .t-val.pos{ color:var(--green); }
+.total-row .t-val.neg{ color:var(--red); }
+
+.stamp{
+  display:inline-block; margin-top:10px; padding:5px 12px;
+  border:2px solid var(--green); color:var(--green);
+  font-family:'Space Mono', monospace; font-size:11px; font-weight:700;
+  letter-spacing:1px; text-transform:uppercase; transform: rotate(-2deg);
+}
+.stamp.debe{ border-color:var(--red); color:var(--red); }
+
+form.entry{ display:flex; flex-direction:column; gap:10px; margin-top:4px; }
+.f-row{ display:flex; gap:8px; }
+.field{ display:flex; flex-direction:column; gap:3px; flex:1; }
+.field label{ font-size:9px; text-transform:uppercase; letter-spacing:1px; color:var(--grey); }
+.field input, .field select{
+  font-family:'JetBrains Mono', monospace; font-size:13px;
+  padding:7px 8px; border:1px solid #d8d3c2; background:#fff; color:var(--ink);
+}
+button.primary{
+  background: var(--ink); color: var(--paper); border:none;
+  padding:10px; font-family:'Space Mono', monospace; font-size:12px;
+  letter-spacing:1.5px; text-transform:uppercase; cursor:pointer; margin-top:2px;
+}
+button.primary:hover{ background:#000; }
+
+.entry-list{ margin-top: 4px; }
+.entry-item{ display:flex; align-items:center; gap:8px; padding:6px 0; border-bottom:1px dotted var(--dotted); font-size:12px; }
+.entry-item .e-date{ color:var(--grey); font-size:11px; white-space:nowrap; }
+.entry-item .e-cat{ font-size:10px; text-transform:uppercase; letter-spacing:0.5px; }
+.entry-item .e-desc{ flex:1; color:var(--grey); font-style:italic; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.entry-item .e-amt{ font-weight:700; white-space:nowrap; }
+.entry-item .e-amt.pos{ color:var(--green); }
+.entry-item .e-amt.neg{ color:var(--red); }
+.entry-item .del{ background:none; border:none; color:#c2bda9; cursor:pointer; font-size:14px; line-height:1; padding:0 2px; }
+.entry-item .del:hover{ color:var(--red); }
+
+.empty{ font-size:12px; color:var(--grey); font-style:italic; text-align:center; padding:10px 0; }
+
+.month-picker{ display:flex; align-items:center; justify-content:center; gap:8px; margin-bottom:14px; }
+.month-picker input{ font-family:'JetBrains Mono', monospace; padding:6px 8px; border:1px solid #3a3a3a; background:#262626; color:var(--paper); border-radius:2px; }
+.month-picker .m-label{ color:#9c9c94; font-size:11px; letter-spacing:1px; text-transform:uppercase; }
+
+.settings-line{ display:flex; align-items:center; gap:8px; font-size:12px; margin-top:8px; color:var(--grey); }
+.settings-line input{ width:52px; font-family:'JetBrains Mono', monospace; padding:4px 6px; border:1px solid #d8d3c2; }
+
+.barcode{
+  height: 30px; margin: 14px auto 2px;
+  background: repeating-linear-gradient(90deg, var(--ink) 0 2px, transparent 2px 4px, var(--ink) 4px 6px, transparent 6px 9px, var(--ink) 9px 10px, transparent 10px 14px);
+  max-width: 220px;
+}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <div class="masthead">
+    <div class="name">LA <span>LIBRETA</span></div>
+    <div class="tag">Raw Soft · Tamar Textil · Sueldo · Maaser · USD</div>
+  </div>
+
+  <nav class="tabs">
+    <button data-tab="resumen" class="active">Resumen</button>
+    <button data-tab="ingresos">Ingresos</button>
+    <button data-tab="gastos">Gastos</button>
+    <button data-tab="maaser">Maaser</button>
+    <button data-tab="usd">Ahorro USD</button>
+  </nav>
+
+  <div id="content"></div>
+</div>
+
+<script>
+const CATS_INGRESO = ["Sueldo","Máquina (Raw Soft)","Telas (Tamar Textil)","Me dio el tío","Extra"];
+
+let state = {
+  movements: [],
+  maaserPagos: [],
+  usd: [],
+  settings: { maaserPct: 10 }
+};
+
+let activeTab = 'resumen';
+let currentMonth = new Date().toISOString().slice(0,7);
+
+const fmtARS = n => '$' + Number(n||0).toLocaleString('es-AR', {minimumFractionDigits:0, maximumFractionDigits:0});
+const fmtUSD = n => 'US$' + Number(n||0).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+const uid = () => Date.now().toString(36) + Math.random().toString(36).slice(2,7);
+const todayStr = () => new Date().toISOString().slice(0,10);
+
+async function loadAll(){
+  try{ const m = await window.storage.get('movements'); state.movements = m ? JSON.parse(m.value) : []; }
+  catch(e){ state.movements = []; }
+  try{ const p = await window.storage.get('maaser_pagos'); state.maaserPagos = p ? JSON.parse(p.value) : []; }
+  catch(e){ state.maaserPagos = []; }
+  try{ const u = await window.storage.get('usd_savings'); state.usd = u ? JSON.parse(u.value) : []; }
+  catch(e){ state.usd = []; }
+  try{ const s = await window.storage.get('settings'); state.settings = s ? JSON.parse(s.value) : {maaserPct:10}; }
+  catch(e){ state.settings = {maaserPct:10}; }
+}
+async function save(key, value){
+  try{ await window.storage.set(key, JSON.stringify(value)); }
+  catch(e){ console.error('error guardando', key, e); }
+}
+
+function switchTab(tab){
+  activeTab = tab;
+  document.querySelectorAll('nav.tabs button').forEach(b=> b.classList.toggle('active', b.dataset.tab === tab));
+  render();
+}
+document.querySelectorAll('nav.tabs button').forEach(b=> b.addEventListener('click', ()=> switchTab(b.dataset.tab)));
+
+function movsDelMes(month){ return state.movements.filter(m => m.fecha.slice(0,7) === month); }
+function ingresosDelMes(month){ return movsDelMes(month).filter(m=>m.type==='ingreso'); }
+function gastosDelMes(month){ return movsDelMes(month).filter(m=>m.type==='gasto'); }
+function totalIngresos(month){ return ingresosDelMes(month).reduce((a,m)=>a+m.monto,0); }
+function totalGastos(month){ return gastosDelMes(month).reduce((a,m)=>a+m.monto,0); }
+
+function pct(){ return (state.settings.maaserPct||10)/100; }
+function maaserGeneradoTotal(){ return state.movements.filter(m=>m.type==='ingreso').reduce((a,m)=>a+m.monto*pct(),0); }
+function maaserPagadoTotal(){ return state.maaserPagos.reduce((a,p)=>a+p.monto,0); }
+function maaserPendiente(){ return Math.max(0, maaserGeneradoTotal() - maaserPagadoTotal()); }
+function maaserGeneradoMes(month){ return ingresosDelMes(month).reduce((a,m)=>a+m.monto*pct(),0); }
+function usdTotal(){ return state.usd.reduce((a,u)=>a+u.montoUSD,0); }
+
+function render(){
+  const el = document.getElementById('content');
+  if(activeTab==='resumen') el.innerHTML = renderResumen();
+  else if(activeTab==='ingresos') el.innerHTML = renderIngresos();
+  else if(activeTab==='gastos') el.innerHTML = renderGastos();
+  else if(activeTab==='maaser') el.innerHTML = renderMaaser();
+  else if(activeTab==='usd') el.innerHTML = renderUSD();
+  wireEvents();
+}
+
+function monthLabel(month){
+  const [y,m] = month.split('-');
+  const nombres = ["ENERO","FEBRERO","MARZO","ABRIL","MAYO","JUNIO","JULIO","AGOSTO","SEPTIEMBRE","OCTUBRE","NOVIEMBRE","DICIEMBRE"];
+  return nombres[parseInt(m,10)-1] + " " + y;
+}
+
+function renderResumen(){
+  const ing = totalIngresos(currentMonth);
+  const gas = totalGastos(currentMonth);
+  const saldo = ing - gas;
+  const maaserMes = maaserGeneradoMes(currentMonth);
+  const pendiente = maaserPendiente();
+
+  return `
+  <div class="month-picker">
+    <span class="m-label">Mes:</span>
+    <input type="month" id="monthInput" value="${currentMonth}">
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Cierre — ${monthLabel(currentMonth)}</div>
+    <div class="r-sub">Balance del mes</div>
+    <hr class="dashed">
+    <div class="line"><span class="lbl">Ingresaste</span><span class="fill"></span><span class="val pos">${fmtARS(ing)}</span></div>
+    <div class="line"><span class="lbl">Gastaste</span><span class="fill"></span><span class="val neg">${fmtARS(gas)}</span></div>
+    <div class="total-row">
+      <span class="t-lbl">Te queda</span>
+      <span class="t-val ${saldo>=0?'pos':'neg'}">${fmtARS(saldo)}</span>
+    </div>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Maaser</div>
+    <div class="r-sub">10% de todo lo que entra</div>
+    <hr class="dashed">
+    <div class="line"><span class="lbl muted">Generado este mes</span><span class="fill"></span><span class="val">${fmtARS(maaserMes)}</span></div>
+    <div class="line"><span class="lbl muted">Pagado (histórico)</span><span class="fill"></span><span class="val">${fmtARS(maaserPagadoTotal())}</span></div>
+    <div class="total-row">
+      <span class="t-lbl">Debés</span>
+      <span class="t-val ${pendiente>0?'neg':'pos'}">${fmtARS(pendiente)}</span>
+    </div>
+    ${pendiente > 0 ? `<span class="stamp debe">Debés maaser</span>` : `<span class="stamp">Al día</span>`}
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Ahorro en dólares</div>
+    <div class="r-sub">Total acumulado</div>
+    <hr class="dashed">
+    <div class="total-row">
+      <span class="t-lbl">Llevás ahorrado</span>
+      <span class="t-val pos">${fmtUSD(usdTotal())}</span>
+    </div>
+    <div class="barcode"></div>
+  </div>
+  `;
+}
+
+function renderIngresos(){
+  const items = [...state.movements].filter(m=>m.type==='ingreso').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const rows = items.map(m=>`
+    <div class="entry-item">
+      <span class="e-date">${m.fecha.slice(5)}</span>
+      <span class="e-cat">${m.categoria}</span>
+      <span class="e-desc">${m.desc||''}</span>
+      <span class="e-amt pos">${fmtARS(m.monto)}</span>
+      <button class="del" data-del-mov="${m.id}">✕</button>
+    </div>
+  `).join('');
+
+  return `
+  <div class="receipt">
+    <div class="r-title">Cargar ingreso</div>
+    <hr class="dashed">
+    <form class="entry" id="formIngreso">
+      <div class="f-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" name="fecha" value="${todayStr()}" required>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <select name="categoria">
+            ${CATS_INGRESO.map(c=>`<option value="${c}">${c}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" name="desc">
+      </div>
+      <div class="field">
+        <label>Monto ($)</label>
+        <input type="number" name="monto" step="0.01" min="0" required>
+      </div>
+      <button type="submit" class="primary">Agregar ingreso</button>
+    </form>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Ingresos cargados</div>
+    <hr class="dashed">
+    <div class="entry-list">
+      ${items.length ? rows : `<div class="empty">Todavía no cargaste ningún ingreso.</div>`}
+    </div>
+  </div>
+  `;
+}
+
+function renderGastos(){
+  const items = [...state.movements].filter(m=>m.type==='gasto').sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const rows = items.map(m=>`
+    <div class="entry-item">
+      <span class="e-date">${m.fecha.slice(5)}</span>
+      <span class="e-cat">${m.categoria}</span>
+      <span class="e-desc">${m.desc||''}</span>
+      <span class="e-amt neg">${fmtARS(m.monto)}</span>
+      <button class="del" data-del-mov="${m.id}">✕</button>
+    </div>
+  `).join('');
+
+  return `
+  <div class="receipt">
+    <div class="r-title">Cargar gasto</div>
+    <hr class="dashed">
+    <form class="entry" id="formGasto">
+      <div class="f-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" name="fecha" value="${todayStr()}" required>
+        </div>
+        <div class="field">
+          <label>Categoría</label>
+          <input type="text" name="categoria" placeholder="ej: insumos" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" name="desc">
+      </div>
+      <div class="field">
+        <label>Monto ($)</label>
+        <input type="number" name="monto" step="0.01" min="0" required>
+      </div>
+      <button type="submit" class="primary">Agregar gasto</button>
+    </form>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Gastos cargados</div>
+    <hr class="dashed">
+    <div class="entry-list">
+      ${items.length ? rows : `<div class="empty">Todavía no cargaste ningún gasto.</div>`}
+    </div>
+  </div>
+  `;
+}
+
+function renderMaaser(){
+  const generado = maaserGeneradoTotal();
+  const pagado = maaserPagadoTotal();
+  const pendiente = maaserPendiente();
+  const pagos = [...state.maaserPagos].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const rows = pagos.map(p=>`
+    <div class="entry-item">
+      <span class="e-date">${p.fecha.slice(5)}</span>
+      <span class="e-desc">${p.desc||''}</span>
+      <span class="e-amt">${fmtARS(p.monto)}</span>
+      <button class="del" data-del-pago="${p.id}">✕</button>
+    </div>
+  `).join('');
+
+  return `
+  <div class="receipt">
+    <div class="r-title">Estado del maaser</div>
+    <div class="r-sub">10% de todo lo que entra</div>
+    <hr class="dashed">
+    <div class="line"><span class="lbl muted">Generado (histórico)</span><span class="fill"></span><span class="val">${fmtARS(generado)}</span></div>
+    <div class="line"><span class="lbl muted">Pagado</span><span class="fill"></span><span class="val pos">${fmtARS(pagado)}</span></div>
+    <div class="total-row">
+      <span class="t-lbl">Debés</span>
+      <span class="t-val ${pendiente>0?'neg':'pos'}">${fmtARS(pendiente)}</span>
+    </div>
+    <div class="settings-line">
+      <span>% de maaser:</span>
+      <input type="number" id="maaserPct" value="${state.settings.maaserPct}" min="1" max="100" step="0.5">
+    </div>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Registrar pago</div>
+    <hr class="dashed">
+    <form class="entry" id="formMaaserPago">
+      <div class="f-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" name="fecha" value="${todayStr()}" required>
+        </div>
+        <div class="field">
+          <label>Monto ($)</label>
+          <input type="number" name="monto" step="0.01" min="0" required>
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" name="desc">
+      </div>
+      <button type="submit" class="primary">Registrar pago</button>
+    </form>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Pagos registrados</div>
+    <hr class="dashed">
+    <div class="entry-list">
+      ${pagos.length ? rows : `<div class="empty">Todavía no registraste ningún pago.</div>`}
+    </div>
+  </div>
+  `;
+}
+
+function renderUSD(){
+  const total = usdTotal();
+  const items = [...state.usd].sort((a,b)=>b.fecha.localeCompare(a.fecha));
+  const rows = items.map(u=>`
+    <div class="entry-item">
+      <span class="e-date">${u.fecha.slice(5)}</span>
+      <span class="e-desc">${u.desc || (u.cotizacion ? '@ '+fmtARS(u.cotizacion) : '')}</span>
+      <span class="e-amt pos">${fmtUSD(u.montoUSD)}</span>
+      <button class="del" data-del-usd="${u.id}">✕</button>
+    </div>
+  `).join('');
+
+  return `
+  <div class="receipt">
+    <div class="r-title">Ahorro en dólares</div>
+    <hr class="dashed">
+    <div class="total-row">
+      <span class="t-lbl">Llevás ahorrado</span>
+      <span class="t-val pos">${fmtUSD(total)}</span>
+    </div>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Registrar cambio a USD</div>
+    <hr class="dashed">
+    <form class="entry" id="formUSD">
+      <div class="f-row">
+        <div class="field">
+          <label>Fecha</label>
+          <input type="date" name="fecha" value="${todayStr()}" required>
+        </div>
+        <div class="field">
+          <label>Monto US$</label>
+          <input type="number" name="montoUSD" step="0.01" min="0" required>
+        </div>
+      </div>
+      <div class="f-row">
+        <div class="field">
+          <label>Cotización (opc.)</label>
+          <input type="number" name="cotizacion" step="0.01" min="0">
+        </div>
+        <div class="field">
+          <label>$ gastados (opc.)</label>
+          <input type="number" name="montoARS" step="0.01" min="0">
+        </div>
+      </div>
+      <div class="field">
+        <label>Descripción (opcional)</label>
+        <input type="text" name="desc">
+      </div>
+      <button type="submit" class="primary">Registrar</button>
+    </form>
+  </div>
+
+  <div class="receipt">
+    <div class="r-title">Historial de cambios</div>
+    <hr class="dashed">
+    <div class="entry-list">
+      ${items.length ? rows : `<div class="empty">Todavía no registraste ningún cambio.</div>`}
+    </div>
+  </div>
+  `;
+}
+
+function wireEvents(){
+  const monthInput = document.getElementById('monthInput');
+  if(monthInput){
+    monthInput.addEventListener('change', e=>{ currentMonth = e.target.value; render(); });
+  }
+
+  const formIngreso = document.getElementById('formIngreso');
+  if(formIngreso){
+    formIngreso.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const fd = new FormData(formIngreso);
+      state.movements.push({
+        id: uid(), type:'ingreso',
+        fecha: fd.get('fecha'), categoria: fd.get('categoria'),
+        desc: fd.get('desc'), monto: parseFloat(fd.get('monto'))
+      });
+      await save('movements', state.movements);
+      render();
+    });
+  }
+
+  const formGasto = document.getElementById('formGasto');
+  if(formGasto){
+    formGasto.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const fd = new FormData(formGasto);
+      state.movements.push({
+        id: uid(), type:'gasto',
+        fecha: fd.get('fecha'), categoria: fd.get('categoria'),
+        desc: fd.get('desc'), monto: parseFloat(fd.get('monto'))
+      });
+      await save('movements', state.movements);
+      render();
+    });
+  }
+
+  const formMaaserPago = document.getElementById('formMaaserPago');
+  if(formMaaserPago){
+    formMaaserPago.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const fd = new FormData(formMaaserPago);
+      state.maaserPagos.push({
+        id: uid(), fecha: fd.get('fecha'), desc: fd.get('desc'),
+        monto: parseFloat(fd.get('monto'))
+      });
+      await save('maaser_pagos', state.maaserPagos);
+      render();
+    });
+  }
+
+  const maaserPctInput = document.getElementById('maaserPct');
+  if(maaserPctInput){
+    maaserPctInput.addEventListener('change', async e=>{
+      state.settings.maaserPct = parseFloat(e.target.value) || 10;
+      await save('settings', state.settings);
+      render();
+    });
+  }
+
+  const formUSD = document.getElementById('formUSD');
+  if(formUSD){
+    formUSD.addEventListener('submit', async e=>{
+      e.preventDefault();
+      const fd = new FormData(formUSD);
+      const montoUSD = parseFloat(fd.get('montoUSD'));
+      let cotizacion = fd.get('cotizacion') ? parseFloat(fd.get('cotizacion')) : null;
+      let montoARS = fd.get('montoARS') ? parseFloat(fd.get('montoARS')) : null;
+      if(cotizacion && !montoARS){ montoARS = montoUSD * cotizacion; }
+      state.usd.push({ id: uid(), fecha: fd.get('fecha'), desc: fd.get('desc'), montoUSD, cotizacion, montoARS });
+      await save('usd_savings', state.usd);
+      render();
+    });
+  }
+
+  document.querySelectorAll('[data-del-mov]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.movements = state.movements.filter(m=>m.id !== btn.dataset.delMov);
+      await save('movements', state.movements);
+      render();
+    });
+  });
+  document.querySelectorAll('[data-del-pago]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.maaserPagos = state.maaserPagos.filter(p=>p.id !== btn.dataset.delPago);
+      await save('maaser_pagos', state.maaserPagos);
+      render();
+    });
+  });
+  document.querySelectorAll('[data-del-usd]').forEach(btn=>{
+    btn.addEventListener('click', async ()=>{
+      state.usd = state.usd.filter(u=>u.id !== btn.dataset.delUsd);
+      await save('usd_savings', state.usd);
+      render();
+    });
+  });
+}
+
+(async function init(){
+  document.getElementById('content').innerHTML = '<div class="receipt"><div class="empty">Cargando...</div></div>';
+  await loadAll();
+  render();
+})();
+</script>
+</body>
+</html>
